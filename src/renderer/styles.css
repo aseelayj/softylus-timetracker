@@ -1,0 +1,186 @@
+:root {
+    --primary-color: #e31e26;
+    --secondary-color: #1e1e1e;
+    --text-color: #ffffff;
+    --background-color: #000000;
+}
+
+
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+.slide-in {
+    animation: slideIn 0.5s ease-out;
+}
+.hover-scale {
+    transition: transform 0.3s ease;
+}
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.app-header {
+    background-color: var(--secondary-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    -webkit-app-region: drag;
+}
+
+.logo {
+    height: 40px;
+    width: auto;
+}
+
+.app-header h1 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.user-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-email {
+    font-size: 0.9rem;
+}
+
+.main-content {
+    display: flex;
+    flex-grow: 1;
+    padding: 2rem;
+    gap: 2rem;
+}
+
+.time-tracking-section, .weekly-activity {
+    background-color: rgba(30, 30, 30, 0.7);
+    border-radius: 8px;
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.time-display h2, .weekly-activity h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.time-counter {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.time-totals {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.total-item h3 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.total-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.tracking-controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--text-color);
+}
+
+.btn-primary:hover {
+    background-color: #c41920;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+.btn-secondary:hover {
+    background-color: #2e2e2e;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: var(--text-color);
+}
+
+.btn-danger:hover {
+    background-color: #bd2130;
+}
+
+.hidden {
+    display: none;
+}
+
+#weeklyChart {
+    width: 100%;
+    height: 300px;
+}
+
+/* Add a subtle grid pattern to the background */
+body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    z-index: -1;
+}
+
+.draggable {
+    -webkit-app-region: drag;
+}
+.draggable button {
+    -webkit-app-region: no-drag;
+}

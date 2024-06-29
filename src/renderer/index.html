@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-black">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Softylus Time Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        softylus: {
+                            red: '#e31e26',
+                            dark: '#1e1e1e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="h-full text-white font-sans">
+    <div class="flex flex-col h-full">
+        <header class="bg-softylus-dark p-4 flex justify-between items-center draggable">
+            <img src="https://soft-main.vercel.app/Logo%20Softylus.svg" alt="Softylus Logo" class="h-8 w-auto">
+            <h1 class="text-xl font-bold">Time Tracker</h1>
+            <div class="flex items-center space-x-4">
+                <span id="user-email" class="text-sm"></span>
+                <button id="logout-button" class="bg-softylus-red hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                    Logout
+                </button>
+            </div>
+        </header>
+        <main class="flex-grow p-6 flex space-x-6">
+            <div class="flex-1 bg-softylus-dark bg-opacity-70 rounded-xl p-6 mb-6 fade-in hover-scale">
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold mb-2">Time Tracked</h2>
+                    <div id="time-display" class="text-4xl font-mono">00:00:00</div>
+                </div>
+                <div class="mb-6 flex justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-1">Today's Total</h3>
+                        <p id="today-total" class="text-2xl">0h 0m</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-1">This Week's Total</h3>
+                        <p id="week-total" class="text-2xl">0h 0m</p>
+                    </div>
+                </div>
+                <div>
+                    <button id="start-button" class="bg-softylus-red hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-4">
+                        Start Tracking
+                    </button>
+                    <button id="stop-button" class="bg-red-600 hover:bg-red-800 text-white font-bold py-2 px-4 rounded hidden">
+                        Stop Tracking
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 bg-softylus-dark bg-opacity-70 rounded-xl p-6 mb-6 fade-in hover-scale">
+                <h2 class="text-xl font-semibold mb-4">Weekly Activity</h2>
+                <div class="h-64">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+            <!-- <div class="w-full bg-softylus-dark bg-opacity-70 rounded-xl p-6 fade-in hover-scale">
+                <h2 class="text-xl font-semibold mb-4">Time Distribution</h2>
+                <div class="flex">
+                    <div class="w-1/2 h-64">
+                        <canvas id="timeDistributionChart"></canvas>
+                    </div>
+                    <div class="w-1/2 p-4">
+                        <h3 class="text-lg font-semibold mb-2">Top Activities</h3>
+                        <ul id="topActivities" class="list-disc list-inside"></ul>
+                    </div>
+                </div>
+            </div> -->
+        </main>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+</html>
