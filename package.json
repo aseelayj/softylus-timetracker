@@ -1,0 +1,19 @@
+{
+  "name": "softylus-timetracker",
+  "version": "1.0.0",
+  "description": "Time tracking app with automatic screenshots",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^31.1.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.44.2",
+    "base64-arraybuffer": "^1.0.2",
+    "electron-json-storage": "^4.6.0"
+  }
+}
