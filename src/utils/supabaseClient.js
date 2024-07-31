@@ -1,8 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs').promises;
 
-const supabaseUrl = 'https://cdrgbdghnprdhzhiftwi.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkcmdiZGdobnByZGh6aGlmdHdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk2NDAzNzMsImV4cCI6MjAzNTIxNjM3M30.CbiOTnvWFbVgUjTOEYTE1bXyapbjUZXFSkyARZM0OWw';
+const supabaseUrl = 'http://supabasekong-ok8gcko.65.21.12.12.sslip.io';
+const supabaseKey = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTcyMjQ0Njk0MCwiZXhwIjo0ODc4MTIwNTQwLCJyb2xlIjoic2VydmljZV9yb2xlIn0.ETLRAIXPxBOEbDj7nclXRaHrq6Cs2ITUp71tbniO2-k'
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function getTimeEntries(userId, startDate, endDate) {
