@@ -1,4 +1,5 @@
 const { ipcRenderer } = require('electron');
+const { getTimeEntries, saveTimeEntry } = require('.././utils/supabaseClient');
 
 
 class TimeTracker {
@@ -15,8 +16,10 @@ class TimeTracker {
 
     initializeEventListeners() {
         document.getElementById('start-button').addEventListener('click', () => this.startTracking());
-        document.getElementById('stop-button').addEventListener('click', () => this.stopTracking());
-        document.getElementById('logout-button').addEventListener('click', () => this.logout());
+        document.getElementById('stop-button').addEventListener('click', () => {
+            console.log('Stop button clicked');
+            this.stopTracking();
+        });        document.getElementById('logout-button').addEventListener('click', () => this.logout());
 
         ipcRenderer.on('user-email', (event, email) => this.setUserEmail(email));
         ipcRenderer.on('tracking-started', () => this.onTrackingStarted());
@@ -42,24 +45,46 @@ class TimeTracker {
     }
 
     startTracking() {
-        ipcRenderer.send('start-tracking', this.userId);
+        console.log('Starting tracking');
         this.startTime = new Date();
-        this.updateTimer();
         this.timerInterval = setInterval(() => this.updateTimer(), 1000);
         this.updateTrackingUI(true);
     }
-
     stopTracking() {
+        console.log('Stopping tracking');
         ipcRenderer.send('stop-tracking', this.userId);
-        clearInterval(this.timerInterval);
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        console.log('Timer interval cleared');
+        console.log('this.timerInterval after clearing:', this.timerInterval);
         this.updateTrackingUI(false);
     }
-
+    async stopTracking() {
+        console.log('Stopping tracking');
+        const endTime = new Date().toISOString();
+        try {
+            await saveTimeEntry(this.userId, this.startTime.toISOString(), endTime, null);
+            console.log('Time entry saved');
+        } catch (error) {
+            console.error('Error saving time entry:', error);
+        }
+        ipcRenderer.send('stop-tracking', this.userId);
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        console.log('Timer interval cleared');
+        this.updateTrackingUI(false);
+        await this.updateTimeTotals(); // Make sure to await this if it's an async function
+    }
     logout() {
         ipcRenderer.send('logout');
     }
 
     updateTrackingUI(isTracking) {
+        console.log('Updating tracking UI, isTracking:', isTracking);
         document.getElementById('start-button').classList.toggle('hidden', isTracking);
         document.getElementById('stop-button').classList.toggle('hidden', !isTracking);
     }
@@ -69,6 +94,7 @@ class TimeTracker {
     }
 
     updateTimer() {
+        console.log('Updating timer');
         const now = new Date();
         const diff = now - this.startTime;
         const hours = Math.floor(diff / 3600000);
@@ -79,18 +105,35 @@ class TimeTracker {
     }
 
     async updateTimeTotals() {
-        const todayTotal = await ipcRenderer.invoke('get-today-total', this.userId);
-        const weekTotal = await ipcRenderer.invoke('get-week-total', this.userId);
-
-        document.getElementById('today-total').textContent = 
-            `${todayTotal.hours}h ${todayTotal.minutes}m`;
-        document.getElementById('week-total').textContent = 
-            `${weekTotal.hours}h ${weekTotal.minutes}m`;
-
-        this.updateWeeklyChart();
-    }
-
+        console.log('Updating time totals for user:', this.userId);
+        try {
+            const todayTotal = await ipcRenderer.invoke('get-today-total', this.userId);
+            console.log('Today total received:', todayTotal);
     
+            const weekTotal = await ipcRenderer.invoke('get-week-total', this.userId);
+            console.log('Week total received:', weekTotal);
+    
+            if (todayTotal && typeof todayTotal.hours === 'number' && typeof todayTotal.minutes === 'number') {
+                document.getElementById('today-total').textContent = 
+                    `${todayTotal.hours}h ${todayTotal.minutes}m`;
+                console.log('Updated today-total element:', document.getElementById('today-total').textContent);
+            } else {
+                console.error('Invalid today total structure:', todayTotal);
+            }
+    
+            if (weekTotal && typeof weekTotal.hours === 'number' && typeof weekTotal.minutes === 'number') {
+                document.getElementById('week-total').textContent = 
+                    `${weekTotal.hours}h ${weekTotal.minutes}m`;
+                console.log('Updated week-total element:', document.getElementById('week-total').textContent);
+            } else {
+                console.error('Invalid week total structure:', weekTotal);
+            }
+    
+            this.updateWeeklyChart();
+        } catch (error) {
+            console.error('Error updating time totals:', error);
+        }
+    }
     initializeTimeDistributionChart() {
         const ctx = document.getElementById('timeDistributionChart').getContext('2d');
         this.timeDistributionChart = new Chart(ctx, {
@@ -199,10 +242,77 @@ class TimeTracker {
             const entry = weeklyData.find(d => d.day === day);
             return entry ? entry.hours : 0;
         });
-
+    
+        const formattedData = data.map(hours => {
+            if (hours >= 1) {
+                return parseFloat(hours.toFixed(2));
+            } else {
+                return parseFloat((hours * 60).toFixed(0));
+            }
+        });
+    
+        const yAxisLabel = (value) => {
+            if (Math.max(...data) >= 1) {
+                return value >= 1 ? `${value}h` : `${(value * 60).toFixed(0)}m`;
+            } else {
+                return `${value}m`;
+            }
+        };
+    
         if (this.weeklyChart) {
-            this.weeklyChart.data.datasets[0].data = data;
+            this.weeklyChart.data.datasets[0].data = formattedData;
+            this.weeklyChart.options.scales.y.ticks.callback = yAxisLabel;
             this.weeklyChart.update();
+        } else {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            this.weeklyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Time Worked',
+                        data: formattedData,
+                        backgroundColor: 'rgba(227, 30, 38, 0.6)',
+                        borderColor: 'rgba(227, 30, 38, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: {
+                                color: '#ffffff',
+                                callback: yAxisLabel
+                            }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#ffffff' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.parsed.y;
+                                    if (Math.max(...data) >= 1) {
+                                        return value >= 1 ? `${value}h` : `${(value * 60).toFixed(0)}m`;
+                                    } else {
+                                        return `${value}m`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
     }
 
