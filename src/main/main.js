@@ -1,6 +1,5 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
-const electronReload = require('electron-reload');
 const storage = require('electron-json-storage');
 const { startTracking, stopTracking, getTrackingStatus, timeTrackerEmitter } = require('./mainTimeTracker');
 const os = require('os');
@@ -10,22 +9,23 @@ const AutoLaunch = require('auto-launch');
 let mainWindow, loginWindow, tray;
 let isTracking = false;
 
+if (process.platform === 'win32') {
+  app.setAppUserModelId("Softylus Time Tracker");
+}
+
 // Set up auto-launch
 let autoLauncher = new AutoLaunch({
-    name: "Softylus Time Tracker",
-    path: app.getPath('exe'),
+  name: "Softylus Time Tracker",
+  path: app.getPath('exe'),
 });
 
 autoLauncher.isEnabled().then((isEnabled) => {
-    if (!isEnabled) autoLauncher.enable();
+  if (!isEnabled) autoLauncher.enable();
 }).catch((err) => {
-    console.error('Failed to enable auto-launch:', err);
+  console.error('Failed to enable auto-launch:', err);
 });
 
-electronReload(__dirname, {
-  electron: path.join(__dirname, 'node_modules', '.bin', 'electron'),
-  hardResetMethod: 'exit'
-});
+
 
 function createLoginWindow() {
   loginWindow = new BrowserWindow({
@@ -54,7 +54,9 @@ function createMainWindow() {
     titleBarStyle: 'hidden',
     backgroundColor: '#000000',
     title: 'Softylus Time Tracker',
-    show: false // Start hidden
+    show: true,
+    icon: path.join(__dirname, 'favicon.ico') // Add this line
+
   });
 
   mainWindow.loadFile('src/renderer/index.html');
@@ -81,74 +83,76 @@ function createTray() {
   const iconPath = path.join(__dirname, '..', 'app icon', process.platform === 'win32' ? 'softylus.ico' : 'softylus.svg');
   const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
   tray = new Tray(trayIcon);
-    
-    const contextMenu = Menu.buildFromTemplate([
-        { label: 'Show App', click: () => mainWindow.show() },
-        { label: 'Quit', click: () => {
-            app.isQuitting = true;
-            app.quit();
-        }}
-    ]);
-    
-    tray.setToolTip('Softylus Time Tracker');
-    tray.setContextMenu(contextMenu);
-    
-    tray.on('click', () => {
-        mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
-    });
 
-    if (process.platform === 'darwin') {
-      app.dock.setIcon(path.join(__dirname, '..', 'app icon', 'softylus.svg'));
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show App', click: () => mainWindow.show() },
+    {
+      label: 'Quit', click: () => {
+        app.isQuitting = true;
+        app.quit();
+      }
+    }
+  ]);
+
+  tray.setToolTip('Softylus Time Tracker');
+  tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => {
+    mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+  });
+
+  if (process.platform === 'darwin') {
+    app.dock.setIcon(path.join(__dirname, '..', 'app icon', 'softylus.svg'));
   }
 }
 
 async function calculateTotalTime(userId, startDate, endDate) {
   console.log(`Calculating total time for user ${userId} from ${startDate} to ${endDate}`);
   try {
-      const entries = await getTimeEntries(userId, startDate, endDate);
-      console.log(`Retrieved ${entries.length} time entries`);
-      
-      let totalMilliseconds = 0;
+    const entries = await getTimeEntries(userId, startDate, endDate);
+    console.log(`Retrieved ${entries.length} time entries`);
 
-      entries.forEach(entry => {
-          const start = new Date(entry.start_time);
-          const end = new Date(entry.end_time);
-          const duration = end - start;
-          totalMilliseconds += duration;
-          console.log(`Entry: ${start.toISOString()} to ${end.toISOString()}, duration: ${duration}ms`);
-      });
+    let totalMilliseconds = 0;
 
-      const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
-      const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+    entries.forEach(entry => {
+      const start = new Date(entry.start_time);
+      const end = new Date(entry.end_time);
+      const duration = end - start;
+      totalMilliseconds += duration;
+      console.log(`Entry: ${start.toISOString()} to ${end.toISOString()}, duration: ${duration}ms`);
+    });
 
-      console.log(`Total time calculated: ${totalHours}h ${totalMinutes}m`);
-      return { hours: totalHours, minutes: totalMinutes };
+    const totalHours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+    const totalMinutes = Math.floor((totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60));
+
+    console.log(`Total time calculated: ${totalHours}h ${totalMinutes}m`);
+    return { hours: totalHours, minutes: totalMinutes };
   } catch (error) {
-      console.error('Error calculating total time:', error);
-      return { hours: 0, minutes: 0 };
+    console.error('Error calculating total time:', error);
+    return { hours: 0, minutes: 0 };
   }
 }
 
 app.whenReady().then(() => {
   testConnection();
   storage.get('userData', (error, data) => {
-      if (error || !data || !data.email) {
-          createLoginWindow();
-      } else {
-          createMainWindow();
-      }
+    if (error || !data || !data.email) {
+      createLoginWindow();
+    } else {
+      createMainWindow();
+    }
   });
 
   app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-          storage.get('userData', (error, data) => {
-              if (!error && data && data.email) {
-                  createMainWindow();
-              } else {
-                  createLoginWindow();
-              }
-          });
-      }
+    if (BrowserWindow.getAllWindows().length === 0) {
+      storage.get('userData', (error, data) => {
+        if (!error && data && data.email) {
+          createMainWindow();
+        } else {
+          createLoginWindow();
+        }
+      });
+    }
   });
 });
 
@@ -156,7 +160,7 @@ app.whenReady().then(() => {
 timeTrackerEmitter.on('screenshot-taken', (filePath) => {
   console.log(`Screenshot taken: ${filePath}`);
   if (mainWindow) {
-      mainWindow.webContents.send('screenshot-taken', filePath);
+    mainWindow.webContents.send('screenshot-taken', filePath);
   }
 });
 
@@ -173,16 +177,16 @@ ipcMain.on('login-success', (event, user) => {
 
 ipcMain.on('logout', () => {
   storage.remove('userData', (error) => {
-      if (error) console.error('Failed to clear user data:', error);
-      if (mainWindow) mainWindow.close();
-      createLoginWindow();
+    if (error) console.error('Failed to clear user data:', error);
+    if (mainWindow) mainWindow.close();
+    createLoginWindow();
   });
 });
 
 ipcMain.on('get-user-email', (event) => {
-    storage.get('userData', (error, data) => {
-        event.reply('user-email', error ? null : (data.email || null));
-    });
+  storage.get('userData', (error, data) => {
+    event.reply('user-email', error ? null : (data.email || null));
+  });
 });
 
 ipcMain.on('start-tracking', (event, userId) => {
@@ -221,11 +225,11 @@ ipcMain.handle('get-today-total', async (event, userId) => {
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   console.log('Date range:', today.toISOString(), 'to', tomorrow.toISOString());
-  
+
   try {
     const entries = await getTimeEntries(userId, today.toISOString(), tomorrow.toISOString());
     console.log('Retrieved entries:', entries);
-    
+
     const total = await calculateTotalTime(userId, today.toISOString(), tomorrow.toISOString());
     console.log('Calculated today total:', total);
     return total;
@@ -247,22 +251,22 @@ ipcMain.handle('get-week-total', async (event, userId) => {
   console.log('Week range:', startOfWeek.toISOString(), 'to', endOfWeek.toISOString());
 
   try {
-      const total = await calculateTotalTime(userId, startOfWeek.toISOString(), endOfWeek.toISOString());
-      console.log('Calculated week total:', total);
-      return total;
+    const total = await calculateTotalTime(userId, startOfWeek.toISOString(), endOfWeek.toISOString());
+    console.log('Calculated week total:', total);
+    return total;
   } catch (error) {
-      console.error('Error calculating week total:', error);
-      return { hours: 0, minutes: 0 };
+    console.error('Error calculating week total:', error);
+    return { hours: 0, minutes: 0 };
   }
 });
 
 ipcMain.handle('get-time-distribution', async (event, userId) => {
   // This is a placeholder. In a real application, you'd fetch this data from your database.
   return {
-      development: Math.random() * 20,
-      meetings: Math.random() * 10,
-      planning: Math.random() * 5,
-      other: Math.random() * 3
+    development: Math.random() * 20,
+    meetings: Math.random() * 10,
+    planning: Math.random() * 5,
+    other: Math.random() * 3
   };
 });
 
@@ -275,19 +279,19 @@ ipcMain.handle('get-weekly-data', async (event, userId) => {
   endOfWeek.setDate(endOfWeek.getDate() + 7);
 
   const entries = await getTimeEntries(userId, startOfWeek.toISOString(), endOfWeek.toISOString());
-  
+
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const weeklyData = weekDays.map(day => ({
-      day,
-      hours: 0
+    day,
+    hours: 0
   }));
 
   entries.forEach(entry => {
-      const start = new Date(entry.start_time);
-      const end = new Date(entry.end_time);
-      const dayIndex = start.getDay();
-      const hours = (end - start) / (1000 * 60 * 60);
-      weeklyData[dayIndex].hours += hours;
+    const start = new Date(entry.start_time);
+    const end = new Date(entry.end_time);
+    const dayIndex = start.getDay();
+    const hours = (end - start) / (1000 * 60 * 60);
+    weeklyData[dayIndex].hours += hours;
   });
 
   return weeklyData;
@@ -298,5 +302,5 @@ app.on('before-quit', () => {
 });
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') app.quit();
 });
