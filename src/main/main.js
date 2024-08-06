@@ -50,8 +50,8 @@ function createMainWindow() {
       nodeIntegration: true,
       contextIsolation: false
     },
-    frame: false,
-    titleBarStyle: 'hidden',
+    // frame: false,
+    // titleBarStyle: 'hidden',
     backgroundColor: '#000000',
     title: 'Softylus Time Tracker',
     show: true,
@@ -227,18 +227,14 @@ ipcMain.handle('get-today-total', async (event, userId) => {
   console.log('Date range:', today.toISOString(), 'to', tomorrow.toISOString());
 
   try {
-    const entries = await getTimeEntries(userId, today.toISOString(), tomorrow.toISOString());
-    console.log('Retrieved entries:', entries);
-
-    const total = await calculateTotalTime(userId, today.toISOString(), tomorrow.toISOString());
-    console.log('Calculated today total:', total);
-    return total;
+      const total = await calculateTotalTime(userId, today.toISOString(), tomorrow.toISOString());
+      console.log('Calculated today total:', total);
+      return total;
   } catch (error) {
-    console.error('Error getting today total:', error);
-    return { hours: 0, minutes: 0 };
+      console.error('Error getting today total:', error);
+      return { hours: 0, minutes: 0 };
   }
 });
-
 ipcMain.handle('get-week-total', async (event, userId) => {
   console.log('Calculating week total for userId:', userId);
   const today = new Date();
@@ -282,18 +278,29 @@ ipcMain.handle('get-weekly-data', async (event, userId) => {
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const weeklyData = weekDays.map(day => ({
-    day,
-    hours: 0
+      day,
+      hours: 0,
+      minutes: 0
   }));
 
   entries.forEach(entry => {
-    const start = new Date(entry.start_time);
-    const end = new Date(entry.end_time);
-    const dayIndex = start.getDay();
-    const hours = (end - start) / (1000 * 60 * 60);
-    weeklyData[dayIndex].hours += hours;
+      const start = new Date(entry.start_time);
+      const end = new Date(entry.end_time);
+      const dayIndex = start.getDay();
+      const durationMs = end - start;
+      const hours = Math.floor(durationMs / (1000 * 60 * 60));
+      const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+      weeklyData[dayIndex].hours += hours;
+      weeklyData[dayIndex].minutes += minutes;
   });
 
+  // Normalize minutes to hours
+  weeklyData.forEach(day => {
+      day.hours += Math.floor(day.minutes / 60);
+      day.minutes = day.minutes % 60;
+  });
+
+  console.log('Weekly data:', weeklyData);
   return weeklyData;
 });
 

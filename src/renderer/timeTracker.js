@@ -114,8 +114,11 @@ class TimeTracker {
             console.log('Week total received:', weekTotal);
     
             if (todayTotal && typeof todayTotal.hours === 'number' && typeof todayTotal.minutes === 'number') {
+                const totalMinutes = (todayTotal.hours * 60) + todayTotal.minutes;
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
                 document.getElementById('today-total').textContent = 
-                    `${todayTotal.hours}h ${todayTotal.minutes}m`;
+                    `${hours}h ${minutes}m`;
                 console.log('Updated today-total element:', document.getElementById('today-total').textContent);
             } else {
                 console.error('Invalid today total structure:', todayTotal);
@@ -129,7 +132,7 @@ class TimeTracker {
                 console.error('Invalid week total structure:', weekTotal);
             }
     
-            this.updateWeeklyChart();
+            await this.updateWeeklyChart();
         } catch (error) {
             console.error('Error updating time totals:', error);
         }
@@ -198,7 +201,7 @@ class TimeTracker {
     }
 
 
-    initializeWeeklyChart() {
+   initializeWeeklyChart() {
         const ctx = document.getElementById('weeklyChart').getContext('2d');
         this.weeklyChart = new Chart(ctx, {
             type: 'bar',
@@ -207,7 +210,7 @@ class TimeTracker {
                 datasets: [{
                     label: 'Hours Worked',
                     data: [0, 0, 0, 0, 0, 0, 0],
-                    backgroundColor: 'rgba(227, 30, 38, 0.6)',
+                    backgroundColor: 'rgba(227, 30, 38, 0.8)',
                     borderColor: 'rgba(227, 30, 38, 1)',
                     borderWidth: 1
                 }]
@@ -218,104 +221,56 @@ class TimeTracker {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { color: '#ffffff' }
+                        max: 25,
+                        ticks: {
+                            stepSize: 5,
+                            callback: (value) => `${value}h`,
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
                     },
                     x: {
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { color: '#ffffff' }
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }
                     }
                 },
                 plugins: {
                     legend: {
-                        labels: { color: '#ffffff' }
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `${context.parsed.y.toFixed(2)} hours`
+                        }
                     }
                 }
             }
         });
     }
-
     async updateWeeklyChart() {
         const weeklyData = await ipcRenderer.invoke('get-weekly-data', this.userId);
         const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         const data = labels.map(day => {
             const entry = weeklyData.find(d => d.day === day);
-            return entry ? entry.hours : 0;
+            if (entry) {
+                // Convert minutes to hours
+                const totalHours = entry.hours + (entry.minutes / 60);
+                return parseFloat(totalHours.toFixed(2));
+            }
+            return 0;
         });
     
-        const formattedData = data.map(hours => {
-            if (hours >= 1) {
-                return parseFloat(hours.toFixed(2));
-            } else {
-                return parseFloat((hours * 60).toFixed(0));
-            }
-        });
+        this.weeklyChart.data.datasets[0].data = data;
+        this.weeklyChart.update();
     
-        const yAxisLabel = (value) => {
-            if (Math.max(...data) >= 1) {
-                return value >= 1 ? `${value}h` : `${(value * 60).toFixed(0)}m`;
-            } else {
-                return `${value}m`;
-            }
-        };
-    
-        if (this.weeklyChart) {
-            this.weeklyChart.data.datasets[0].data = formattedData;
-            this.weeklyChart.options.scales.y.ticks.callback = yAxisLabel;
-            this.weeklyChart.update();
-        } else {
-            const ctx = document.getElementById('weeklyChart').getContext('2d');
-            this.weeklyChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Time Worked',
-                        data: formattedData,
-                        backgroundColor: 'rgba(227, 30, 38, 0.6)',
-                        borderColor: 'rgba(227, 30, 38, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                            ticks: {
-                                color: '#ffffff',
-                                callback: yAxisLabel
-                            }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                            ticks: { color: '#ffffff' }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: '#ffffff' }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => {
-                                    const value = context.parsed.y;
-                                    if (Math.max(...data) >= 1) {
-                                        return value >= 1 ? `${value}h` : `${(value * 60).toFixed(0)}m`;
-                                    } else {
-                                        return `${value}m`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
+        console.log('Weekly chart data:', data);  // Add this for debugging
     }
-
     onTrackingStarted() {
         this.startTime = new Date();
         this.updateTimer();

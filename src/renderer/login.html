@@ -6,29 +6,69 @@
     <title>Timetracker Login</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #e31e26;
+            --secondary-color: #1e1e1e;
+            --background-gradient-start: #000000;
+            --background-gradient-end: #434343;
+            --text-color: #ffffff;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, var(--background-gradient-start), var(--background-gradient-end));
+            color: var(--text-color);
+        }
+        .login-container {
+            background-color: var(--secondary-color);
+        }
+        .login-container input {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+        }
+        .login-container input:focus {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .login-container button {
+            background-color: var(--primary-color);
+        }
+        .login-container button:hover {
+            background-color: #c41920;
+        }
+        .error-message {
+            color: #e31e26;
+        }
+        .loading-spinner .animate-spin {
+            border-color: var(--primary-color);
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-r from-blue-500 to-purple-600 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-2xl w-96 max-w-full">
-        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Timetracker Login</h1>
+<body class="min-h-screen flex items-center justify-center">
+    <div class="login-container bg-white p-8 rounded-lg shadow-2xl w-96 max-w-full">
+        <div class="flex justify-center mb-2">
+        <img src="https://soft-main.vercel.app/Logo%20Softylus.svg" alt="Softylus Logo" class=" text-center     ">
+         </div>
+        <h1 class="text-3xl font-bold mb-6 text-center">Timetracker Login</h1>
+        
         <form id="login-form" class="space-y-4">
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <label for="email" class="block text-sm font-medium">Email</label>
                 <input type="email" id="email" required
-                       class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <label for="password" class="block text-sm font-medium">Password</label>
                 <input type="password" id="password" required
-                       class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
             <div>
-                <button type="submit" 
-                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Login
                 </button>
             </div>
         </form>
-        <p id="error-message" class="mt-2 text-center text-sm text-red-600 hidden"></p>
+        <p id="error-message" class="error-message mt-2 text-center text-sm hidden"></p>
         <div id="loading-spinner" class="mt-4 flex justify-center hidden">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
@@ -38,7 +78,7 @@
         const { ipcRenderer } = require('electron');
         
         const supabaseUrl = 'http://supabasekong-ok8gcko.65.21.12.12.sslip.io';
-const supabaseKey = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTcyMjQ0Njk0MCwiZXhwIjo0ODc4MTIwNTQwLCJyb2xlIjoic2VydmljZV9yb2xlIn0.ETLRAIXPxBOEbDj7nclXRaHrq6Cs2ITUp71tbniO2-k'
+const supabaseKey = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTcyMjQ0Njk0MCwiZXhwIjo0ODc4MTIwNTQwLCJyb2xlIjoic2VydmljZV9yb2xlIn0.ETLRAIXPxBOEbDj7nclXRaHrq6Cs2ITUp71tbniO2-k';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         const loginForm = document.getElementById('login-form');

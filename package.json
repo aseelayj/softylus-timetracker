@@ -29,9 +29,11 @@
         "nsis"
       ],
       "icon": "src/main/favicon.ico",
-      "signingHashAlgorithms": ["sha256"]
-
-    } , "nsis": {
+      "signingHashAlgorithms": [
+        "sha256"
+      ]
+    },
+    "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     },

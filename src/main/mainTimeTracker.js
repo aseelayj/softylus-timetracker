@@ -21,7 +21,7 @@ async function startTracking(userId) {
         isTracking = true;
         await ensureDirectoryExists(userDataPath);
         screenshotInterval = setInterval(() => takeScreenshot(userId), 60000); // Take screenshot every minute
-        timeTrackerEmitter.emit('tracking-started');
+        timeTrackerEmitter.emit('tracking-started', new Date().getTime()); // Emit with start timestamp
     }
 }
 
@@ -29,7 +29,7 @@ async function stopTracking(userId) {
     if (isTracking) {
         isTracking = false;
         clearInterval(screenshotInterval);
-        timeTrackerEmitter.emit('tracking-stopped');
+        timeTrackerEmitter.emit('tracking-stopped', new Date().getTime()); // Emit with stop timestamp
     }
 }
 

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker Overlay</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 5px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            -webkit-app-region: drag;
+        }
+        #time-display {
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="time-display">00:00:00</div>
+    <script>
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.on('update-time', (event, time) => {
+            document.getElementById('time-display').textContent = time;
+        });
+    </script>
+       
+</body>
+</html>
